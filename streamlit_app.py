@@ -775,6 +775,23 @@ game_template = r"""
         line-height: 1.42;
     }
 
+    .warmup-note {
+        margin: 0;
+        padding: 10px 12px;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #3d3300;
+        background: #fff7d6;
+        border: 1px solid #e4c34f;
+        border-radius: 9px;
+    }
+
+    .warmup-note strong {
+        display: block;
+        margin-bottom: 2px;
+        color: #6b5200;
+    }
+
     .intro-score-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1011,9 +1028,12 @@ game_template = r"""
             <h3 id="intro-guide-title">How to play</h3>
             <ul>
                 <li>Drag each basketball to its matching accounting hoop, or tap a basketball and then tap its hoop.</li>
-                <li>After you enter your information, you will have a 20-second warm-up to browse the board before the game officially begins.</li>
                 <li>You have 15 seconds for each answer. The shot clock resets after every submitted answer.</li>
             </ul>
+            <p class="warmup-note" role="note">
+                <strong>20-second warm-up period</strong>
+                Browse and scroll through the full board before play begins. Basketballs and hoops are inactive during warm-up; the shot clock, scoring, and completion timer all begin when the warm-up countdown ends.
+            </p>
             <h3>Scoring</h3>
             <div class="intro-score-grid">
                 <div class="intro-score-item intro-score-item--positive"><strong>+10</strong>Correct answer</div>
@@ -1306,7 +1326,6 @@ game_template = r"""
         resetShotClock(gameStartedAt);
         if (shotClockInterval !== null) window.clearInterval(shotClockInterval);
         shotClockInterval = window.setInterval(updateShotClock, 100);
-        primeBundledSound(buzzerSound);
     }
 
     function captureCompletionTime() {
@@ -1588,30 +1607,6 @@ game_template = r"""
         });
     }
 
-    function primeBundledSound(sound) {
-        if (!sound || typeof sound.play !== 'function') return;
-        const wasMuted = sound.muted;
-        sound.muted = true;
-        try {
-            const playRequest = sound.play();
-            if (playRequest && typeof playRequest.then === 'function') {
-                playRequest
-                    .then(() => {
-                        sound.pause();
-                        sound.currentTime = 0;
-                        sound.muted = wasMuted;
-                    })
-                    .catch(() => { sound.muted = wasMuted; });
-            } else {
-                sound.pause();
-                sound.currentTime = 0;
-                sound.muted = wasMuted;
-            }
-        } catch (error) {
-            sound.muted = wasMuted;
-        }
-    }
-
     function playBundledSound(sound, fallback) {
         if (!sound || typeof sound.play !== 'function') {
             fallback();
@@ -1639,6 +1634,7 @@ game_template = r"""
     }
 
     function playShotClockBuzzer() {
+        if (shotClockDeadline !== null || shotClockDisplayValue !== 0 || attemptComplete || gameStartedAt === null) return;
         playBundledSound(buzzerSound, playSynthesizedShotClockBuzzer);
         window.setTimeout(() => {
             if (!buzzerSound || buzzerSound.paused) return;
@@ -1778,6 +1774,7 @@ game_template = r"""
 
         playerInfo = { firstName, lastInitial, sectionNumber };
         playerFormError.textContent = '';
+        getAudioContext();
         playerModal.classList.remove('is-open');
         startWarmup();
         leaderboardButton.focus({ preventScroll: true });
