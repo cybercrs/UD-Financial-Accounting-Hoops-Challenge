@@ -1,7 +1,8 @@
-# UD Accounting Hoop Challenge
+# UD Financial Accounting Hoops Challenge
 
 A Streamlit accounting-classification game. Students match definition
-basketballs to account hoops under a ten-second shot clock. Correct answers
+basketballs to account hoops after a 20-second warm-up period and under a
+15-second shot clock. Correct answers
 earn 10 points; incorrect answers and shot-clock violations cost 2 points,
 with a minimum score of zero.
 

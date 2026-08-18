@@ -1,4 +1,4 @@
-# UD Accounting Hoop Challenge Leaderboard
+# UD Financial Accounting Hoops Challenge Leaderboard
 
 The game uses a public Google Form submission endpoint and a published,
 formula-generated Google Sheets leaderboard. No Google password, API key, or
@@ -6,8 +6,8 @@ service-account credential is stored in this repository.
 
 ## Google resources
 
-- Form: [UD Accounting Hoop Challenge Leaderboard](https://docs.google.com/forms/d/1vhCUSfIOpvp4h1kyaAQmtqhsq0_aI4ioO_ialiYOaAE/edit)
-- Response Sheet: [UD Accounting Hoop Challenge Leaderboard (Responses)](https://docs.google.com/spreadsheets/d/17p8DJYHKFRHzcp_DX_QMPszYgUbirOZ3c2AYNnX-DGA/edit?gid=183002363)
+- Form: [UD Financial Accounting Hoops Challenge Leaderboard](https://docs.google.com/forms/d/1vhCUSfIOpvp4h1kyaAQmtqhsq0_aI4ioO_ialiYOaAE/edit)
+- Response Sheet: [UD Financial Accounting Hoops Challenge Leaderboard (Responses)](https://docs.google.com/spreadsheets/d/17p8DJYHKFRHzcp_DX_QMPszYgUbirOZ3c2AYNnX-DGA/edit?gid=183002363)
 - Public leaderboard CSV: `https://docs.google.com/spreadsheets/d/e/2PACX-1vQtNnYVM9mU7X63VhPlng78CqwawCLIXHqIREAZawATyZEhsEWs_6TI_b8KK4hRC_zeiKwxaL1R72bg/pub?gid=4392995&single=true&output=csv`
 
 The Form records First Name, Last Initial, Section Number, Score, a hidden

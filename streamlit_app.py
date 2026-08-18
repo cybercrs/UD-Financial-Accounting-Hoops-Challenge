@@ -8,7 +8,7 @@ from pathlib import Path
 import streamlit as st
 
 
-st.set_page_config(page_title="UD Accounting Hoop Challenge", layout="wide")
+st.set_page_config(page_title="UD Financial Accounting Hoops Challenge", layout="wide")
 
 st.markdown(
     """
@@ -326,6 +326,12 @@ game_template = r"""
 
     #shot-clock-panel.violation {
         animation: clock-violation 420ms ease-in-out;
+    }
+
+    #shot-clock-panel.warmup {
+        color: #ffd447;
+        border-color: #ffd447;
+        box-shadow: inset 0 0 0 2px #242830, 0 0 10px rgba(255, 212, 71, 0.45);
     }
 
     #player-controls {
@@ -981,11 +987,11 @@ game_template = r"""
         <div id="player-controls">
             <button id="leaderboard-button" class="action-button action-button--header" type="button">Leaderboard</button>
         </div>
-        <h1 id="header-title">UD Accounting Hoop Challenge</h1>
+        <h1 id="header-title">UD Financial Accounting Hoops Challenge</h1>
         <div id="header-status">
-            <div id="shot-clock-panel" role="timer" aria-label="Shot clock: 10 seconds">
+            <div id="shot-clock-panel" role="timer" aria-label="Shot clock: 15 seconds">
                 <span id="shot-clock-label">SHOT CLOCK</span>
-                <span id="shot-clock">10</span>
+                <span id="shot-clock">15</span>
             </div>
             <div id="score-board" aria-live="polite">Score: <span id="score">0</span></div>
         </div>
@@ -1005,7 +1011,8 @@ game_template = r"""
             <h3 id="intro-guide-title">How to play</h3>
             <ul>
                 <li>Drag each basketball to its matching accounting hoop, or tap a basketball and then tap its hoop.</li>
-                <li>You have 10 seconds for each answer. The shot clock starts when you begin and resets after every submitted answer.</li>
+                <li>After you enter your information, you will have a 20-second warm-up to browse the board before the game officially begins.</li>
+                <li>You have 15 seconds for each answer. The shot clock resets after every submitted answer.</li>
             </ul>
             <h3>Scoring</h3>
             <div class="intro-score-grid">
@@ -1030,7 +1037,7 @@ game_template = r"""
             </div>
             <p id="player-form-error" class="form-error" role="alert"></p>
             <p class="privacy-note">The leaderboard displays only your first name, last initial, section number, high score, and best completion time. Your email address is not collected.</p>
-            <button class="action-button" type="submit">Start Challenge</button>
+            <button class="action-button" type="submit">Begin Warm-Up</button>
         </form>
     </div>
 </div>
@@ -1084,7 +1091,9 @@ game_template = r"""
         attemptId: '__FORM_ATTEMPT_ID__',
         completionTime: '__FORM_COMPLETION_TIME__'
     });
-    const SHOT_CLOCK_SECONDS = 10;
+    const WARMUP_SECONDS = 20;
+    const WARMUP_DURATION_MS = WARMUP_SECONDS * 1000;
+    const SHOT_CLOCK_SECONDS = 15;
     const SHOT_CLOCK_DURATION_MS = SHOT_CLOCK_SECONDS * 1000;
 
     let score = 0;
@@ -1097,6 +1106,10 @@ game_template = r"""
     let currentAttemptId = createAttemptId();
     let gameStartedAt = null;
     let completionTimeSeconds = null;
+    let warmupActive = false;
+    let warmupDeadline = null;
+    let warmupInterval = null;
+    let warmupDisplayValue = WARMUP_SECONDS;
     let shotClockDeadline = null;
     let shotClockInterval = null;
     let shotClockResetTimeout = null;
@@ -1113,6 +1126,7 @@ game_template = r"""
     const missSound = document.getElementById('miss-sound');
     const buzzerSound = document.getElementById('buzzer-sound');
     const shotClockPanel = document.getElementById('shot-clock-panel');
+    const shotClockLabel = document.getElementById('shot-clock-label');
     const shotClockDisplay = document.getElementById('shot-clock');
     const playerModal = document.getElementById('player-modal');
     const playerForm = document.getElementById('player-form');
@@ -1190,9 +1204,52 @@ game_template = r"""
 
     function renderShotClock(value) {
         shotClockDisplayValue = value;
+        shotClockLabel.textContent = 'SHOT CLOCK';
         shotClockDisplay.textContent = String(value);
         shotClockPanel.setAttribute('aria-label', `Shot clock: ${value} second${value === 1 ? '' : 's'}`);
+        shotClockPanel.classList.remove('warmup');
         shotClockPanel.classList.toggle('expiring', value > 0 && value <= 3 && !attemptComplete);
+    }
+
+    function renderWarmup(value) {
+        warmupDisplayValue = value;
+        shotClockLabel.textContent = 'WARM UP';
+        shotClockDisplay.textContent = String(value);
+        shotClockPanel.setAttribute('aria-label', `Warm-up: ${value} second${value === 1 ? '' : 's'} remaining`);
+        shotClockPanel.classList.add('warmup');
+        shotClockPanel.classList.remove('expiring', 'violation');
+    }
+
+    function finishWarmup() {
+        if (!warmupActive) return;
+        warmupActive = false;
+        warmupDeadline = null;
+        if (warmupInterval !== null) {
+            window.clearInterval(warmupInterval);
+            warmupInterval = null;
+        }
+        startGameTimers();
+    }
+
+    function updateWarmup() {
+        if (!warmupActive || warmupDeadline === null) return;
+        const remainingMilliseconds = warmupDeadline - performance.now();
+        if (remainingMilliseconds <= 0) {
+            finishWarmup();
+            return;
+        }
+        const nextDisplayValue = Math.ceil(remainingMilliseconds / 1000);
+        if (nextDisplayValue !== warmupDisplayValue) renderWarmup(nextDisplayValue);
+    }
+
+    function startWarmup() {
+        warmupActive = true;
+        gameStartedAt = null;
+        completionTimeSeconds = null;
+        warmupDeadline = performance.now() + WARMUP_DURATION_MS;
+        renderWarmup(WARMUP_SECONDS);
+        if (warmupInterval !== null) window.clearInterval(warmupInterval);
+        warmupInterval = window.setInterval(updateWarmup, 100);
     }
 
     function resetShotClock(now = performance.now()) {
@@ -1590,7 +1647,11 @@ game_template = r"""
         }, 1400);
     }
 
-    function dragStart() {
+    function dragStart(event) {
+        if (warmupActive || gameStartedAt === null || attemptComplete) {
+            event.preventDefault();
+            return;
+        }
         draggedItem = this;
         selectCard(this);
         window.setTimeout(() => { this.style.opacity = '0.45'; }, 0);
@@ -1615,6 +1676,7 @@ game_template = r"""
     }
 
     function selectCard(card) {
+        if (warmupActive || gameStartedAt === null || attemptComplete) return;
         if (selectedItem && selectedItem !== card) {
             selectedItem.classList.remove('selected');
         }
@@ -1623,6 +1685,7 @@ game_template = r"""
     }
 
     function attemptMatch(card, bucket) {
+        if (warmupActive || gameStartedAt === null || attemptComplete) return;
         if (!card || card.getAttribute('draggable') === 'false') return;
 
         const expectedTarget = card.dataset.target;
@@ -1716,7 +1779,7 @@ game_template = r"""
         playerInfo = { firstName, lastInitial, sectionNumber };
         playerFormError.textContent = '';
         playerModal.classList.remove('is-open');
-        startGameTimers();
+        startWarmup();
         leaderboardButton.focus({ preventScroll: true });
         mainContainer.scrollTop = 0;
         window.scrollTo(0, 0);
