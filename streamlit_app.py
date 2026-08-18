@@ -1804,7 +1804,6 @@ game_template = r"""
     window.addEventListener('resize', () => window.requestAnimationFrame(syncCardPoolSpace));
 
     window.requestAnimationFrame(syncCardPoolSpace);
-    window.setTimeout(() => firstNameInput.focus(), 50);
 </script>
 </body>
 </html>
