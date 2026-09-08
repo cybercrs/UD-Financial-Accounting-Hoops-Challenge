@@ -8,8 +8,11 @@ with a minimum score of zero.
 
 Scores and completion times are submitted to a Google Form. The published
 leaderboard keeps each student's highest score and uses the fastest time among
-attempts earning that score as the tie-breaker. See `LEADERBOARD_SETUP.md` for
-the Google integration details.
+attempts earning that score as the tie-breaker. Students can view it from the
+intro screen or during play. Because Google's published-sheet feed is
+eventually consistent, the app polls for newer results and retains the most
+complete snapshot received during the current browser session. See
+`LEADERBOARD_SETUP.md` for the Google integration details.
 
 ### How to run it on your own machine
 

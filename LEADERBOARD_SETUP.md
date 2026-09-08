@@ -20,13 +20,15 @@ The private `Form Responses 1` tab contains every attempt. The `Leaderboard`
 tab uses this formula in cell A1:
 
 ```text
-=LET(names,FILTER('Form Responses 1'!B2:B,'Form Responses 1'!B2:B<>""),initials,FILTER('Form Responses 1'!C2:C,'Form Responses 1'!B2:B<>""),sections,FILTER('Form Responses 1'!D2:D,'Form Responses 1'!B2:B<>""),scores,FILTER('Form Responses 1'!E2:E,'Form Responses 1'!B2:B<>""),times,FILTER('Form Responses 1'!G2:G,'Form Responses 1'!B2:B<>""),players,UNIQUE(HSTACK(names,initials,sections)),highScores,MAP(CHOOSECOLS(players,1),CHOOSECOLS(players,2),CHOOSECOLS(players,3),LAMBDA(n,i,s,MAX(FILTER(scores,names=n,initials=i,sections=s)))),bestTimes,MAP(CHOOSECOLS(players,1),CHOOSECOLS(players,2),CHOOSECOLS(players,3),highScores,LAMBDA(n,i,s,h,IFERROR(MIN(FILTER(times,names=n,initials=i,sections=s,scores=h,times<>"")),""))),leaders,HSTACK(players,highScores,bestTimes,IF(bestTimes="",1,0)),sorted,SORT(leaders,4,FALSE,6,TRUE,5,TRUE),VSTACK({"First Name","Last Initial","Section","High Score","Best Time (seconds)"},CHOOSECOLS(sorted,1,2,3,4,5)))
+=LET(names,FILTER('Form Responses 1'!B2:B,'Form Responses 1'!B2:B<>""),initials,FILTER('Form Responses 1'!C2:C,'Form Responses 1'!B2:B<>""),sections,FILTER('Form Responses 1'!D2:D,'Form Responses 1'!B2:B<>""),scores,FILTER('Form Responses 1'!E2:E,'Form Responses 1'!B2:B<>""),times,FILTER('Form Responses 1'!G2:G,'Form Responses 1'!B2:B<>""),timestamps,FILTER('Form Responses 1'!A2:A,'Form Responses 1'!B2:B<>""),players,UNIQUE(HSTACK(names,initials,sections)),highScores,MAP(CHOOSECOLS(players,1),CHOOSECOLS(players,2),CHOOSECOLS(players,3),LAMBDA(n,i,s,MAX(FILTER(scores,names=n,initials=i,sections=s)))),bestTimes,MAP(CHOOSECOLS(players,1),CHOOSECOLS(players,2),CHOOSECOLS(players,3),highScores,LAMBDA(n,i,s,h,IFERROR(MIN(FILTER(times,names=n,initials=i,sections=s,scores=h,times<>"")),""))),latestSubmission,IFERROR(TEXT(MAX(timestamps),"yyyy-mm-dd HH:mm:ss"),""),snapshotTimes,MAP(CHOOSECOLS(players,1),LAMBDA(playerName,latestSubmission)),leaders,HSTACK(players,highScores,bestTimes,IF(bestTimes="",1,0),snapshotTimes),sorted,SORT(leaders,4,FALSE,6,TRUE,5,TRUE),VSTACK({"First Name","Last Initial","Section","High Score","Best Time (seconds)","Data As Of"},CHOOSECOLS(sorted,1,2,3,4,5,7)))
 ```
 
 The formula keeps one row per first-name/last-initial/section identity. It finds
 the student's highest score, selects the fastest time only from attempts that
 earned that score, then sorts by score descending and time ascending. Legacy
 attempts without completion time sort behind timed attempts when scores tie.
+The final column repeats the newest Form-response timestamp so the app can
+identify the age of each published snapshot.
 
 Only the calculated `Leaderboard` tab is published. The raw response tab stays
 private. The synthetic setup check (`Test S.`, section `999`) is filtered from
@@ -34,8 +36,10 @@ the in-app table.
 
 ## Operational notes
 
-- Google can take a few seconds to refresh the published table after a Form
-  submission. The completion view includes a Refresh button.
+- Google's published-web layer can take several minutes to refresh after a Form
+  submission. The app polls in the background after completion, rejects stale
+  request races, and retains the most complete results received during the
+  current browser session.
 - Identity is intentionally lightweight: first name + last initial + section.
   Students with identical values share one displayed high-score identity.
 - The score is generated in the browser and is appropriate for a casual class

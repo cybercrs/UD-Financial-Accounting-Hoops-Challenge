@@ -701,6 +701,13 @@ game_template = r"""
         gap: 14px;
     }
 
+    .player-form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
     .field-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(130px, 0.45fr);
@@ -1057,7 +1064,10 @@ game_template = r"""
             </div>
             <p id="player-form-error" class="form-error" role="alert"></p>
             <p class="privacy-note">The leaderboard displays only your first name, last initial, section number, high score, and best completion time. Your email address is not collected.</p>
-            <button class="action-button" type="submit">Begin Warm-Up</button>
+            <div class="player-form-actions">
+                <button id="intro-leaderboard-button" class="action-button action-button--secondary" type="button">View Leaderboard</button>
+                <button class="action-button" type="submit">Begin Warm-Up</button>
+            </div>
         </form>
     </div>
 </div>
@@ -1115,6 +1125,9 @@ game_template = r"""
     const WARMUP_DURATION_MS = WARMUP_SECONDS * 1000;
     const SHOT_CLOCK_SECONDS = 15;
     const SHOT_CLOCK_DURATION_MS = SHOT_CLOCK_SECONDS * 1000;
+    const LEADERBOARD_POLL_INTERVAL_MS = 10000;
+    const LEADERBOARD_OPEN_POLL_DURATION_MS = 60000;
+    const LEADERBOARD_COMPLETION_POLL_DURATION_MS = 180000;
 
     let score = 0;
     let matchedCount = 0;
@@ -1134,6 +1147,14 @@ game_template = r"""
     let shotClockInterval = null;
     let shotClockResetTimeout = null;
     let shotClockDisplayValue = SHOT_CLOCK_SECONDS;
+    let leaderboardDataAsOf = '';
+    let leaderboardRequestSequence = 0;
+    let leaderboardFetchController = null;
+    let leaderboardPollTimeout = null;
+    let leaderboardPollDeadline = 0;
+    let leaderboardOpenedFromIntro = false;
+
+    const leaderboardEntriesByPlayer = new Map();
 
     const cards = Array.from(document.querySelectorAll('.card'));
     const buckets = Array.from(document.querySelectorAll('.bucket'));
@@ -1154,6 +1175,7 @@ game_template = r"""
     const firstNameInput = document.getElementById('first-name');
     const lastInitialInput = document.getElementById('last-initial');
     const sectionNumberInput = document.getElementById('section-number');
+    const introLeaderboardButton = document.getElementById('intro-leaderboard-button');
     const leaderboardButton = document.getElementById('leaderboard-button');
     const leaderboardModal = document.getElementById('leaderboard-modal');
     const leaderboardModalTitle = document.getElementById('leaderboard-modal-title');
@@ -1334,10 +1356,12 @@ game_template = r"""
         stopShotClock();
     }
 
-    function openLeaderboard({ completed = false } = {}) {
+    function openLeaderboard({ completed = false, fromIntro = false, load = true } = {}) {
+        leaderboardOpenedFromIntro = fromIntro;
+        if (fromIntro) playerModal.classList.remove('is-open');
         leaderboardModalTitle.textContent = completed ? 'Challenge Complete!' : 'Leaderboard';
         leaderboardModalCopy.textContent = completed
-            ? 'Your result is being added below. It may take a few seconds for the rankings to refresh.'
+            ? 'Your result is being added below. Rankings update automatically and may take a few minutes.'
             : 'Highest score for each student; fastest completion time breaks score ties.';
         completionScore.classList.toggle('is-visible', completed);
         completionScore.textContent = completed
@@ -1347,12 +1371,16 @@ game_template = r"""
         playAgainButton.hidden = !completed;
         leaderboardModal.classList.add('is-open');
         leaderboardCloseButton.focus();
-        loadLeaderboard();
+        if (load) startLeaderboardPolling(LEADERBOARD_OPEN_POLL_DURATION_MS);
     }
 
     function closeLeaderboard() {
+        stopLeaderboardPolling();
         leaderboardModal.classList.remove('is-open');
-        leaderboardButton.focus({ preventScroll: true });
+        const returnToIntro = leaderboardOpenedFromIntro;
+        leaderboardOpenedFromIntro = false;
+        if (returnToIntro) playerModal.classList.add('is-open');
+        (returnToIntro ? introLeaderboardButton : leaderboardButton).focus({ preventScroll: true });
     }
 
     function parseCsv(csvText) {
@@ -1396,7 +1424,55 @@ game_template = r"""
             && entry.section === playerInfo.sectionNumber;
     }
 
-    function renderLeaderboard(entries) {
+    function leaderboardPlayerKey(entry) {
+        return `${entry.firstName.toLocaleLowerCase()}\u0000${entry.lastInitial.toLocaleUpperCase()}\u0000${entry.section}`;
+    }
+
+    function sortLeaderboardEntries(entries) {
+        return entries.sort((left, right) => {
+            const scoreDifference = right.highScore - left.highScore;
+            if (scoreDifference !== 0) return scoreDifference;
+            const leftTime = Number.isFinite(left.bestTime) ? left.bestTime : Number.POSITIVE_INFINITY;
+            const rightTime = Number.isFinite(right.bestTime) ? right.bestTime : Number.POSITIVE_INFINITY;
+            if (leftTime !== rightTime) return leftTime - rightTime;
+            return left.firstName.localeCompare(right.firstName);
+        });
+    }
+
+    function mergeLeaderboardEntries(entries) {
+        entries.forEach((entry) => {
+            const key = leaderboardPlayerKey(entry);
+            const existing = leaderboardEntriesByPlayer.get(key);
+            if (!existing || entry.highScore > existing.highScore) {
+                leaderboardEntriesByPlayer.set(key, entry);
+                return;
+            }
+            if (entry.highScore !== existing.highScore) return;
+
+            const entryHasFasterTime = Number.isFinite(entry.bestTime)
+                && (!Number.isFinite(existing.bestTime) || entry.bestTime < existing.bestTime);
+            if (entryHasFasterTime) leaderboardEntriesByPlayer.set(key, entry);
+        });
+    }
+
+    function currentLeaderboardEntries() {
+        return sortLeaderboardEntries(Array.from(leaderboardEntriesByPlayer.values()));
+    }
+
+    function formatLeaderboardTimestamp(value) {
+        if (!value) return '';
+        const timestamp = new Date(value.replace(' ', 'T'));
+        if (Number.isNaN(timestamp.getTime())) return value;
+        return timestamp.toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
+    function renderLeaderboard(entries, { updating = false, loadError = false } = {}) {
         leaderboardBody.replaceChildren();
 
         entries.slice(0, 100).forEach((entry, index) => {
@@ -1419,49 +1495,104 @@ game_template = r"""
             leaderboardBody.appendChild(tableRow);
         });
 
-        leaderboardStatus.textContent = entries.length
-            ? `Showing ${Math.min(entries.length, 100)} of ${entries.length} students.`
-            : 'No scores have been recorded yet. Be the first!';
+        const dataAsOfText = leaderboardDataAsOf
+            ? ` Data current through ${formatLeaderboardTimestamp(leaderboardDataAsOf)}.`
+            : '';
+        if (entries.length) {
+            const updateText = updating
+                ? ' Checking for newer scores…'
+                : (loadError ? ' The latest refresh failed; showing the most complete results already received.' : '');
+            leaderboardStatus.textContent = `Showing ${Math.min(entries.length, 100)} of ${entries.length} students.${dataAsOfText}${updateText}`;
+        } else {
+            leaderboardStatus.textContent = loadError
+                ? 'The leaderboard could not be loaded. Check your connection and select Refresh.'
+                : `No scores have been recorded yet.${updating ? ' Checking for new scores…' : ' Be the first!'}`;
+        }
     }
 
-    async function loadLeaderboard() {
+    async function loadLeaderboard({ polling = false } = {}) {
+        const requestId = ++leaderboardRequestSequence;
+        if (leaderboardFetchController !== null) leaderboardFetchController.abort();
+        const controller = new AbortController();
+        leaderboardFetchController = controller;
         leaderboardRefreshButton.disabled = true;
-        leaderboardStatus.textContent = 'Loading leaderboard...';
+        const existingEntries = currentLeaderboardEntries();
+        if (existingEntries.length) {
+            renderLeaderboard(existingEntries, { updating: true });
+        } else {
+            leaderboardStatus.textContent = 'Loading leaderboard...';
+        }
 
         try {
             const separator = LEADERBOARD_CSV_URL.includes('?') ? '&' : '?';
             const response = await fetch(`${LEADERBOARD_CSV_URL}${separator}_=${Date.now()}`, {
-                cache: 'no-store'
+                cache: 'no-store',
+                signal: controller.signal
             });
             if (!response.ok) throw new Error(`Leaderboard request failed (${response.status})`);
 
             const rows = parseCsv(await response.text());
+            if (requestId !== leaderboardRequestSequence) return false;
             const entries = rows.slice(1)
                 .map((row) => ({
                     firstName: (row[0] || '').trim(),
                     lastInitial: (row[1] || '').trim().replace(/\.$/, ''),
                     section: (row[2] || '').trim(),
                     highScore: Number.parseInt((row[3] || '').trim(), 10),
-                    bestTime: Number.parseFloat((row[4] || '').trim())
+                    bestTime: Number.parseFloat((row[4] || '').trim()),
+                    dataAsOf: (row[5] || '').trim()
                 }))
                 .filter((entry) => entry.firstName && entry.lastInitial && entry.section && Number.isFinite(entry.highScore))
-                .filter((entry) => !(entry.firstName === 'Test' && entry.lastInitial === 'S' && entry.section === '999'))
-                .sort((left, right) => {
-                    const scoreDifference = right.highScore - left.highScore;
-                    if (scoreDifference !== 0) return scoreDifference;
-                    const leftTime = Number.isFinite(left.bestTime) ? left.bestTime : Number.POSITIVE_INFINITY;
-                    const rightTime = Number.isFinite(right.bestTime) ? right.bestTime : Number.POSITIVE_INFINITY;
-                    if (leftTime !== rightTime) return leftTime - rightTime;
-                    return left.firstName.localeCompare(right.firstName);
-                });
+                .filter((entry) => !(entry.firstName === 'Test' && entry.lastInitial === 'S' && entry.section === '999'));
 
-            renderLeaderboard(entries);
+            mergeLeaderboardEntries(entries);
+            const responseDataAsOf = entries.find((entry) => entry.dataAsOf)?.dataAsOf || '';
+            if (responseDataAsOf > leaderboardDataAsOf) leaderboardDataAsOf = responseDataAsOf;
+            const stillPolling = polling && Date.now() < leaderboardPollDeadline;
+            renderLeaderboard(currentLeaderboardEntries(), { updating: stillPolling });
+            return true;
         } catch (error) {
-            leaderboardBody.replaceChildren();
-            leaderboardStatus.textContent = 'The leaderboard could not be loaded. Check your connection and select Refresh.';
+            if (error.name === 'AbortError') return false;
+            if (requestId === leaderboardRequestSequence) {
+                renderLeaderboard(currentLeaderboardEntries(), { loadError: true });
+            }
+            return false;
         } finally {
-            leaderboardRefreshButton.disabled = false;
+            if (requestId === leaderboardRequestSequence) {
+                leaderboardFetchController = null;
+                leaderboardRefreshButton.disabled = false;
+            }
         }
+    }
+
+    function stopLeaderboardPolling() {
+        if (leaderboardPollTimeout !== null) {
+            window.clearTimeout(leaderboardPollTimeout);
+            leaderboardPollTimeout = null;
+        }
+        leaderboardPollDeadline = 0;
+    }
+
+    function startLeaderboardPolling(durationMs) {
+        stopLeaderboardPolling();
+        leaderboardPollDeadline = Date.now() + durationMs;
+
+        const poll = async () => {
+            if (!leaderboardModal.classList.contains('is-open')) {
+                stopLeaderboardPolling();
+                return;
+            }
+            await loadLeaderboard({ polling: true });
+            if (Date.now() < leaderboardPollDeadline) {
+                leaderboardPollTimeout = window.setTimeout(poll, LEADERBOARD_POLL_INTERVAL_MS);
+            } else {
+                leaderboardPollTimeout = null;
+                leaderboardPollDeadline = 0;
+                renderLeaderboard(currentLeaderboardEntries());
+            }
+        };
+
+        poll();
     }
 
     async function submitScore() {
@@ -1490,14 +1621,18 @@ game_template = r"""
     async function completeAttempt() {
         if (attemptComplete || matchedCount !== cards.length) return;
         attemptComplete = true;
-        openLeaderboard({ completed: true });
+        openLeaderboard({ completed: true, load: false });
 
         const saved = await submitScore();
         saveStatus.textContent = saved
-            ? 'Score sent successfully. Refresh the leaderboard if it does not appear immediately.'
+            ? 'Score sent. The leaderboard will continue checking for updated rankings.'
             : 'Your score could not be sent. Check your connection, then use Play Again to retry the challenge.';
 
-        window.setTimeout(loadLeaderboard, 1800);
+        if (saved) {
+            startLeaderboardPolling(LEADERBOARD_COMPLETION_POLL_DURATION_MS);
+        } else {
+            loadLeaderboard();
+        }
     }
 
     function getAudioContext() {
@@ -1782,9 +1917,10 @@ game_template = r"""
         window.scrollTo(0, 0);
     });
 
+    introLeaderboardButton.addEventListener('click', () => openLeaderboard({ fromIntro: true }));
     leaderboardButton.addEventListener('click', () => openLeaderboard());
     leaderboardCloseButton.addEventListener('click', closeLeaderboard);
-    leaderboardRefreshButton.addEventListener('click', loadLeaderboard);
+    leaderboardRefreshButton.addEventListener('click', () => startLeaderboardPolling(LEADERBOARD_OPEN_POLL_DURATION_MS));
     playAgainButton.addEventListener('click', () => window.location.reload());
 
     leaderboardModal.addEventListener('click', (event) => {
