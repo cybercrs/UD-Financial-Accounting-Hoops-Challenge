@@ -1,0 +1,18 @@
+{
+  "repository": "cybercrs/UD-Financial-Accounting-Hoops-Challenge",
+  "source_branch": "browser/static-hoops",
+  "source_commit": "ca1a1012dfec135038fb26d5621806acc0e7bb81",
+  "static_branch": "hoops-browser-preview",
+  "source_ci": {
+    "status": "success",
+    "run_url": "https://github.com/cybercrs/UD-Financial-Accounting-Hoops-Challenge/actions/runs/38065279143"
+  },
+  "pages_before_activation": false,
+  "activation": "Settings > Pages > Deploy from a branch > hoops-browser-preview > /(root) > Save",
+  "main_unchanged": "e3098d25934011b14c36bf8445e9bb8e900cc205",
+  "runtime_manifest_sha256": "ecc1ff278acdaedac0284a1375e303f5a35cd437295911b069fd154c4e6560da",
+  "hosted_browser_test": "not run; Pages not activated",
+  "live_form_post": "not run; all local tests mocked",
+  "live_csv_get": "blocked by cloud proxy 403",
+  "capacity": "not measured"
+}

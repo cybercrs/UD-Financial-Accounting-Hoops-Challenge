@@ -1,0 +1,57 @@
+{
+  "server_baseline": "e3098d25934011b14c36bf8445e9bb8e900cc205",
+  "files": {
+    ".nojekyll": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "LICENSE": {
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "sha256": "aa03db1f384604c972ba021debfada15fd8cac21ef83a1d6669308cd787c4b2a",
+      "bytes": 1705
+    },
+    "UD Basketball.png": {
+      "sha256": "28c4b35e5ed184944c7bf6b9e4ad62396d5d4709532418a1ac67a4071ba21b35",
+      "bytes": 1629892
+    },
+    "UD Hoop.png": {
+      "sha256": "fabb293381fb961ceb4e13a4e25b79b90a781a958fdfd93785840edb9c186a78",
+      "bytes": 1594925
+    },
+    "assets/AUDIO_SOURCES.md": {
+      "sha256": "7f9c5df542c59be15e7c3b90d2ba01498d818220486872d92957d1ac23480d81",
+      "bytes": 826
+    },
+    "assets/basketball-buzzer.wav": {
+      "sha256": "35208d2cf0ddc408e8e4e852964cdbf40e887db9122bb3ba5b9f5c9d90f0f812",
+      "bytes": 709696
+    },
+    "assets/basketball-hard-hit.wav": {
+      "sha256": "122a7ec7616333d74c80c7e149597aaafed6124e0957655e8e36746e230ef566",
+      "bytes": 121532
+    },
+    "assets/basketball-through-net.wav": {
+      "sha256": "8cb46fada6e48f86dbae04d76d45b8a788fdfe9a8a8cdd1815d5dff219bd22e9",
+      "bytes": 195356
+    },
+    "index.html": {
+      "sha256": "2fafbf21cb59ad68b43dede0fdd786cb8f448b84dd7b775489c3700970191016",
+      "bytes": 76276
+    },
+    "vendor/default.css": {
+      "sha256": "78460a8d3512f692dd035f09657a924a9a44ff5053ba7107cb7fc51ce2986448",
+      "bytes": 260
+    },
+    "vendor/index.min.js": {
+      "sha256": "de9f5cd8299bb2ba0384e79344bf545f74d498ff2085fe187ee4031267d9e83f",
+      "bytes": 10693
+    },
+    "vendor/index.min.js.map": {
+      "sha256": "024209434d5d9ed2693d81bcc159fe1a7689e99f8b54d801015a6b9686b7a92f",
+      "bytes": 87913
+    }
+  }
+}

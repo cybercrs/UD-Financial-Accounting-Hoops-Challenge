@@ -1,0 +1,50 @@
+{
+  "browser": "Chromium",
+  "google": "mocked; zero live submissions",
+  "real_google_submission": "not run",
+  "hosted_https_browser": "not run",
+  "classroom_capacity": "not measured",
+  "results": [
+    {
+      "check": "real 20s warm-up; keyboard match; audio loaded; leaderboard clock violation",
+      "status": "passed",
+      "mock_form_posts": 0
+    },
+    {
+      "check": "subdirectory complete game; wrong answers; repeats; drafts; locked completion; opaque mock POST; reset",
+      "status": "passed",
+      "mock_form_posts": 1
+    },
+    {
+      "check": "future query/hash rejected; refresh/bookmark starts new game; no stored identity",
+      "status": "passed",
+      "mock_form_posts": 0
+    },
+    {
+      "check": "same-context tabs and independent browser sessions",
+      "status": "passed",
+      "mock_form_posts": 0
+    },
+    {
+      "check": "390px touch/tap gameplay, layout, and narrow screenshots",
+      "status": "passed",
+      "mock_form_posts": 0
+    },
+    {
+      "check": "native desktop drag/drop",
+      "status": "passed",
+      "mock_form_posts": 0
+    },
+    {
+      "check": "failed POST; stale and failed CSV retain best prior snapshot",
+      "status": "passed",
+      "mock_form_posts": 1
+    },
+    {
+      "check": "no unexpected external requests or JavaScript errors",
+      "status": "passed",
+      "unexpected_requests": [],
+      "javascript_errors": []
+    }
+  ]
+}

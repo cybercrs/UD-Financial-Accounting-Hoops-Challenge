@@ -1,0 +1,5 @@
+{
+  "test": "Live published CSV read-only GET",
+  "status": "blocked",
+  "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+}
