@@ -1,0 +1,10 @@
+test_changed_server_or_template_marker_is_rejected (browser.test_build.StaticBuildTests.test_changed_server_or_template_marker_is_rejected) ... ok
+test_checkout_root_output_is_rejected (browser.test_build.StaticBuildTests.test_checkout_root_output_is_rejected) ... ok
+test_deterministic_hash_verified_output (browser.test_build.StaticBuildTests.test_deterministic_hash_verified_output) ... ok
+test_extracts_complete_game_and_unchanged_integration (browser.test_build.StaticBuildTests.test_extracts_complete_game_and_unchanged_integration) ... ok
+test_has_only_local_asset_references (browser.test_build.StaticBuildTests.test_has_only_local_asset_references) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.032s
+
+OK
