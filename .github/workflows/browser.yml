@@ -1,0 +1,29 @@
+name: Hoops static browser checks
+
+on:
+  push:
+    branches: [browser/static-hoops]
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build and test static extraction
+        run: |
+          python -m browser.build
+          python -m unittest browser.test_build -v
+          python -m py_compile streamlit_app.py browser/*.py
+          python -c 'import re; from pathlib import Path; from browser.build import render; Path("/tmp/hoops-game.js").write_text(re.findall(r"<script>(.*?)</script>", render(), re.S)[0])'
+          node --check /tmp/hoops-game.js
+          node --check browser/vendor/index.min.js
+          git diff --check

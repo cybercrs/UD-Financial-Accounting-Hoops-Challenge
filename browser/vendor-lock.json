@@ -1,0 +1,16 @@
+{
+  "package": "mobile-drag-drop",
+  "version": "2.3.0-rc.2",
+  "files": {
+    "index.min.js": {
+      "url": "https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js",
+      "sha256": "de9f5cd8299bb2ba0384e79344bf545f74d498ff2085fe187ee4031267d9e83f",
+      "bytes": 10693
+    },
+    "default.css": {
+      "url": "https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css",
+      "sha256": "78460a8d3512f692dd035f09657a924a9a44ff5053ba7107cb7fc51ce2986448",
+      "bytes": 260
+    }
+  }
+}
