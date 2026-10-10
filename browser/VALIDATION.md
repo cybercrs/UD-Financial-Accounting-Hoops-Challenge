@@ -14,8 +14,8 @@ Repository: cybercrs/UD-Financial-Accounting-Hoops-Challenge. Baseline/main:
   Python compilation with the prepared Hoops Python 3.14.7 runtime;
   Node 24 syntax checks on generated game JavaScript and the vendored polyfill;
   Git whitespace check. See review/unit.log and review/lint.log.
-- Repeated builds produce identical file hashes. App output: 12 hashed files,
-  4,352,518 bytes, plus manifest.json. Screenshots and validation notes are
+- Repeated builds produce identical file hashes. App output: 13 hashed files,
+  4,440,431 bytes, plus manifest.json. Screenshots and validation notes are
   additional review artifacts rather than runtime dependencies.
 - All pre-existing tracked files, including streamlit_app.py, requirements.txt,
   .python-version, artwork/audio, .devcontainer/, and existing .github/ files,

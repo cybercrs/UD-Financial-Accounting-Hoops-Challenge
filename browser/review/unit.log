@@ -5,6 +5,6 @@ test_extracts_complete_game_and_unchanged_integration (browser.test_build.Static
 test_has_only_local_asset_references (browser.test_build.StaticBuildTests.test_has_only_local_asset_references) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.032s
+Ran 5 tests in 0.029s
 
 OK

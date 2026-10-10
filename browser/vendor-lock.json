@@ -11,6 +11,11 @@
       "url": "https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/default.css",
       "sha256": "78460a8d3512f692dd035f09657a924a9a44ff5053ba7107cb7fc51ce2986448",
       "bytes": 260
+    },
+    "index.min.js.map": {
+      "url": "https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js.map",
+      "sha256": "024209434d5d9ed2693d81bcc159fe1a7689e99f8b54d801015a6b9686b7a92f",
+      "bytes": 87913
     }
   }
 }
